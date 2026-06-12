@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block title %}MACH-1 — Outreach{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1>▷ OUTREACH</h1>
+        <div class="subtitle">Sales team drafted messages — all require your approval</div>
+    </div>
+</div>
+
+<div class="filter-tabs">
+    <a href="/outreach" class="filter-tab {% if not current_status %}active{% endif %}">All</a>
+    <a href="/outreach?status=draft" class="filter-tab {% if current_status == 'draft' %}active{% endif %}">Draft</a>
+    <a href="/outreach?status=approved" class="filter-tab {% if current_status == 'approved' %}active{% endif %}">Approved</a>
+    <a href="/outreach?status=sent" class="filter-tab {% if current_status == 'sent' %}active{% endif %}">Sent</a>
+    <a href="/outreach?status=replied" class="filter-tab {% if current_status == 'replied' %}active{% endif %}">Replied</a>
+    <a href="/outreach?status=rejected" class="filter-tab {% if current_status == 'rejected' %}active{% endif %}">Rejected</a>
+</div>
+
+{% if items %}
+{% for item in items %}
+<div class="card">
+    <div class="card-header">
+        <span>
+            {{ item.target_name }}
+            <span style="color: var(--text-muted); font-size: 11px; margin-left: 8px;">
+                {{ item.channel }} · {{ item.target_type }}
+            </span>
+        </span>
+        <span class="badge badge-{{ item.status }}">{{ item.status }}</span>
+    </div>
+    <div class="card-body">
+        {% if item.subject %}
+        <p style="font-weight: 600; margin-bottom: 8px; color: var(--accent-amber);">
+            Subject: {{ item.subject }}
+        </p>
+        {% endif %}
+
+        <div class="copy-wrap">
+            <button class="btn btn-sm copy-btn" onclick="copyContent('msg-{{ item.id }}')">Copy</button>
+            <div id="msg-{{ item.id }}" class="content-preview" style="max-height: 200px;">{{ item.message }}</div>
+        </div>
+
+        <div class="btn-group" style="margin-top: 12px;">
+            {% if item.status == 'draft' %}
+            <button class="btn btn-green btn-sm" onclick="approveOutreach({{ item.id }})">✓ Approve</button>
+            <button class="btn btn-red btn-sm" onclick="rejectOutreach({{ item.id }})">✗ Reject</button>
+            {% elif item.status == 'approved' %}
+            <button class="btn btn-primary btn-sm" onclick="markOutreachSent({{ item.id }})">✓ Mark Sent</button>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endfor %}
+{% else %}
+<div class="empty-state">
+    <div class="icon">▷</div>
+    <p>No outreach messages. Create a plan with sales tasks to generate outreach.</p>
+</div>
+{% endif %}
+{% endblock %}

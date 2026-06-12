@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}MACH-1{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+<div class="shell">
+    <aside class="sidebar">
+        <div class="sidebar-brand">
+            <div class="logo-mark">M</div>
+            <div>
+                <span class="logo-text">MACH-1</span>
+                <span class="logo-ver">v3</span>
+            </div>
+        </div>
+        <nav>
+            <div class="nav-section">Main</div>
+            <a href="/" class="{% if request.path == '/' %}active{% endif %}">
+                <span class="ico">◉</span> Dashboard
+            </a>
+            <a href="/plans" class="{% if '/plans' in request.path %}active{% endif %}">
+                <span class="ico">◈</span> Plans
+            </a>
+            <a href="/content" class="{% if '/content' in request.path %}active{% endif %}">
+                <span class="ico">◆</span> Content
+            </a>
+            <a href="/topics" class="{% if '/topics' in request.path %}active{% endif %}">
+                <span class="ico">◇</span> Topics
+            </a>
+            <div class="nav-section">Build</div>
+            <a href="/projects" class="{% if '/projects' in request.path %}active{% endif %}">
+                <span class="ico">▣</span> Projects
+            </a>
+            <div class="nav-section">Grow</div>
+            <a href="/outreach" class="{% if '/outreach' in request.path %}active{% endif %}">
+                <span class="ico">▷</span> Outreach
+            </a>
+        </nav>
+        <div class="sidebar-footer">
+            mach-1 &copy; 2026 · <span style="color:var(--accent)">karun</span>
+        </div>
+    </aside>
+    <main class="main">
+        {% block content %}{% endblock %}
+    </main>
+</div>
+<div class="toast-container"></div>
+<script src="{{ url_for('static', filename='js/app.js') }}"></script>
+{% block scripts %}{% endblock %}
+</body>
+</html>

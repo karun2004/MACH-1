@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block title %}MACH-1 — {{ item.title }}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1>◆ {{ item.title[:80] }}</h1>
+        <div class="subtitle">
+            {{ item.content_type }} · {{ item.platform or 'general' }} ·
+            <span class="badge badge-{{ item.status }}">{{ item.status }}</span>
+        </div>
+    </div>
+    <a href="/content" class="btn btn-sm">← Back</a>
+</div>
+
+<!-- Action buttons -->
+<div class="btn-group" style="margin-bottom: 16px;">
+    {% if item.status == 'draft' or item.status == 'pending_review' %}
+    <button class="btn btn-green" onclick="approveContent({{ item.id }})">✓ Approve</button>
+    <button class="btn btn-red" onclick="rejectContent({{ item.id }})">✗ Reject</button>
+    {% elif item.status == 'approved' %}
+    <button class="btn btn-primary" onclick="publishContent({{ item.id }})">▶ Mark Published</button>
+    {% endif %}
+</div>
+
+<!-- Content body with copy button -->
+<div class="card">
+    <div class="card-header">
+        Content Body
+        <button class="btn btn-sm copy-btn" onclick="copyContent('content-body')">Copy</button>
+    </div>
+    <div class="card-body">
+        <div class="copy-wrap">
+            <div id="content-body" class="content-preview">{{ item.body }}</div>
+        </div>
+    </div>
+</div>
+
+<!-- Metadata -->
+<div class="card">
+    <div class="card-header">Metadata</div>
+    <div class="card-body">
+        <div class="table-wrap">
+            <table>
+                <tbody>
+                    <tr><td style="font-weight: 600; width: 150px;">ID</td><td>{{ item.id }}</td></tr>
+                    <tr><td style="font-weight: 600;">Topic ID</td><td>{{ item.topic_id or '—' }}</td></tr>
+                    <tr><td style="font-weight: 600;">Type</td><td>{{ item.content_type }}</td></tr>
+                    <tr><td style="font-weight: 600;">Platform</td><td>{{ item.platform or '—' }}</td></tr>
+                    <tr><td style="font-weight: 600;">Model</td><td>{{ item.model_used or '—' }}</td></tr>
+                    <tr><td style="font-weight: 600;">Tokens</td><td>{{ item.tokens_used }}</td></tr>
+                    <tr><td style="font-weight: 600;">Created</td><td>{{ item.created_at }}</td></tr>
+                    <tr><td style="font-weight: 600;">Published</td><td>{{ item.published_at or '—' }}</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

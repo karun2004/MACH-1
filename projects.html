@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% block title %}MACH-1 — Projects{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1>▣ PROJECTS</h1>
+        <div class="subtitle">Built by the Coding Team</div>
+    </div>
+</div>
+
+<div class="filter-tabs">
+    <a href="/projects" class="filter-tab {% if not current_status %}active{% endif %}">All</a>
+    <a href="/projects?status=pending" class="filter-tab {% if current_status == 'pending' %}active{% endif %}">Pending</a>
+    <a href="/projects?status=building" class="filter-tab {% if current_status == 'building' %}active{% endif %}">Building</a>
+    <a href="/projects?status=complete" class="filter-tab {% if current_status == 'complete' %}active{% endif %}">Complete</a>
+    <a href="/projects?status=failed" class="filter-tab {% if current_status == 'failed' %}active{% endif %}">Failed</a>
+    <a href="/projects?status=escalated" class="filter-tab {% if current_status == 'escalated' %}active{% endif %}">Escalated</a>
+</div>
+
+{% if items %}
+<div class="card">
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Name</th>
+                    <th>Template</th>
+                    <th>Status</th>
+                    <th>Fixes</th>
+                    <th>Repo</th>
+                    <th>Created</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in items %}
+                <tr>
+                    <td style="font-family: var(--font-mono); font-size: 12px;">{{ item.id }}</td>
+                    <td style="font-weight: 500;">{{ item.name }}</td>
+                    <td><span class="badge badge-new">{{ item.template or '—' }}</span></td>
+                    <td><span class="badge badge-{{ item.status }}">{{ item.status }}</span></td>
+                    <td style="font-family: var(--font-mono);">{{ item.fix_attempts }}/3</td>
+                    <td>
+                        {% if item.repo_url %}
+                        <a href="{{ item.repo_url }}" target="_blank" style="font-size: 12px;">GitHub →</a>
+                        {% else %}—{% endif %}
+                    </td>
+                    <td style="font-size: 12px; color: var(--text-secondary);">{{ item.created_at[:16] }}</td>
+                    <td>
+                        {% if item.status == 'complete' and not item.repo_url %}
+                        <button class="btn btn-primary btn-sm" onclick="pushProject({{ item.id }})">Push to GitHub</button>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% else %}
+<div class="empty-state">
+    <div class="icon">▣</div>
+    <p>No projects yet. Create a plan with coding tasks to start building.</p>
+</div>
+{% endif %}
+{% endblock %}

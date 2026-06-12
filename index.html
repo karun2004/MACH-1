@@ -1,0 +1,271 @@
+{% extends "base.html" %}
+{% block title %}MACH-1 — Dashboard{% endblock %}
+
+{% block content %}
+<!-- Cover Banner -->
+<div class="cover-section">
+    <img id="cover-img" class="cover-img" src="" alt="">
+    <div class="cover-overlay"></div>
+    <div class="cover-actions">
+        <label class="btn-cover">
+            📷 Change Cover
+            <input type="file" accept="image/*" onchange="uploadPhoto('cover', this)">
+        </label>
+    </div>
+</div>
+
+<!-- Profile Row -->
+<div class="profile-row">
+    <div class="profile-photo" onclick="document.getElementById('pf-upload').click()">
+        <div class="initials" id="pf-initials">K</div>
+        <img id="pf-img" src="" alt="" style="display:none;position:absolute;inset:0;">
+        <div class="edit-badge">✎</div>
+        <input type="file" id="pf-upload" accept="image/*" onchange="uploadPhoto('profile', this)" style="display:none">
+    </div>
+    <div class="profile-info">
+        <h1>Karun</h1>
+        <div class="tagline">Embedded Engineer · AI Company Operator</div>
+    </div>
+</div>
+
+<div class="dash-content">
+
+<!-- Stats -->
+<div class="stat-row">
+    <div class="stat-box">
+        <div class="s-label">Content</div>
+        <div class="s-val">{{ overview.stats.content.values()|sum if overview.stats.content else 0 }}</div>
+        <div class="s-sub">{{ overview.stats.content.get('draft',0) }} drafts · {{ overview.stats.content.get('approved',0) }} approved</div>
+    </div>
+    <div class="stat-box">
+        <div class="s-label">Topics</div>
+        <div class="s-val">{{ overview.stats.topics.values()|sum if overview.stats.topics else 0 }}</div>
+        <div class="s-sub">{{ overview.stats.topics.get('new',0) }} new · {{ overview.stats.topics.get('ranked',0) }} ranked</div>
+    </div>
+    <div class="stat-box">
+        <div class="s-label">Projects</div>
+        <div class="s-val">{{ overview.stats.projects.values()|sum if overview.stats.projects else 0 }}</div>
+        <div class="s-sub">{{ overview.stats.projects.get('complete',0) }} done · {{ overview.stats.projects.get('failed',0) }} failed</div>
+    </div>
+    <div class="stat-box">
+        <div class="s-label">Outreach</div>
+        <div class="s-val">{{ overview.stats.outreach.values()|sum if overview.stats.outreach else 0 }}</div>
+        <div class="s-sub">{{ overview.stats.outreach.get('draft',0) }} drafts · {{ overview.stats.outreach.get('sent',0) }} sent</div>
+    </div>
+</div>
+
+<!-- Row: Actions + Calendar -->
+<div class="grid-2-1">
+    <!-- Actions + Plan -->
+    <div>
+        <div class="card" style="margin-bottom:14px">
+            <div class="card-header"><span class="card-icon" style="background:var(--accent-light);color:var(--accent)">⚡</span> Quick Actions</div>
+            <div class="card-body">
+                <div class="action-bar">
+                    <button class="btn btn-primary" onclick="createPlan()">◈ Create Plan</button>
+                    <button class="btn" onclick="runScrape()">◇ Scrape</button>
+                    <button class="btn" onclick="runRank()">▲ Rank</button>
+                    <div class="sep"></div>
+                    <select id="oc-type" class="btn" style="appearance:auto">
+                        <option value="blog">Blog</option>
+                        <option value="social_post">Social</option>
+                        <option value="tweet">Tweet</option>
+                        <option value="linkedin_post">LinkedIn</option>
+                        <option value="video_script">Video</option>
+                    </select>
+                    <select id="oc-count" class="btn" style="appearance:auto">
+                        <option value="3">×3</option>
+                        <option value="5" selected>×5</option>
+                        <option value="10">×10</option>
+                    </select>
+                    <button class="btn btn-green" onclick="runOpenClaw()">▶ OpenClaw</button>
+                    <div class="sep"></div>
+                    <button class="btn" onclick="runHealthCheck()">♥</button>
+                    <button class="btn" onclick="runBackup()">⬇</button>
+                </div>
+            </div>
+        </div>
+
+        {% if overview.stats.active_plan %}
+        <div class="card">
+            <div class="card-header">
+                <span><span class="card-icon" style="background:var(--blue-light);color:var(--blue)">◈</span> Active Plan</span>
+                <span class="badge badge-{{ overview.stats.active_plan.status }}">{{ overview.stats.active_plan.status }}</span>
+            </div>
+            <div class="card-body">
+                <p style="font-weight:600;margin-bottom:10px;">{{ overview.stats.active_plan.summary }}</p>
+                <div class="btn-group">
+                    {% if overview.stats.active_plan.status == 'proposed' %}
+                    <button class="btn btn-green btn-sm" onclick="approvePlan({{ overview.stats.active_plan.id }})">✓ Approve</button>
+                    <button class="btn btn-red btn-sm" onclick="rejectPlan({{ overview.stats.active_plan.id }})">✗ Reject</button>
+                    {% elif overview.stats.active_plan.status == 'approved' %}
+                    <button class="btn btn-primary btn-sm" onclick="executePlan({{ overview.stats.active_plan.id }})">▶ Execute</button>
+                    {% endif %}
+                    <a href="/plans" class="btn btn-sm">All Plans →</a>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Calendar -->
+    <div class="card">
+        <div class="card-header"><span class="card-icon" style="background:var(--amber-light);color:var(--amber)">📅</span> Calendar</div>
+        <div class="card-body">
+            <div class="cal-header">
+                <span class="month" id="cal-month"></span>
+                <div class="cal-nav">
+                    <button onclick="calPrev()">‹</button>
+                    <button onclick="calNext()">›</button>
+                </div>
+            </div>
+            <div class="cal-grid" id="cal-grid"></div>
+        </div>
+    </div>
+</div>
+
+<!-- Row: Rings + Teams -->
+<div class="grid-2">
+    <!-- Rings -->
+    <div>
+        {% set tc = overview.stats.content.values()|sum if overview.stats.content else 0 %}
+        {% set ac = (overview.stats.content.get('approved',0) + overview.stats.content.get('published',0)) if overview.stats.content else 0 %}
+        {% set pc = ((ac/tc*100)|int) if tc > 0 else 0 %}
+        {% set tt = overview.stats.topics.values()|sum if overview.stats.topics else 0 %}
+        {% set rt = (overview.stats.topics.get('ranked',0) + overview.stats.topics.get('used',0) + overview.stats.topics.get('selected',0)) if overview.stats.topics else 0 %}
+        {% set pt = ((rt/tt*100)|int) if tt > 0 else 0 %}
+        {% set tp = overview.stats.projects.values()|sum if overview.stats.projects else 0 %}
+        {% set cp = overview.stats.projects.get('complete',0) if overview.stats.projects else 0 %}
+        {% set pp = ((cp/tp*100)|int) if tp > 0 else 0 %}
+
+        <div class="ring-row" style="margin-bottom:12px">
+            <div class="ring-card">
+                <div class="ring">
+                    <svg viewBox="0 0 64 64"><circle class="bg" cx="32" cy="32" r="26"/><circle class="fg" cx="32" cy="32" r="26" stroke="var(--accent)" stroke-dasharray="163" stroke-dashoffset="{{ 163 - (163*pc/100) }}"/></svg>
+                    <span class="rv" style="color:var(--accent)">{{ pc }}%</span>
+                </div>
+                <div class="ring-info"><div class="ri-title">Content</div><div class="ri-sub">{{ ac }}/{{ tc }} approved</div></div>
+            </div>
+            <div class="ring-card">
+                <div class="ring">
+                    <svg viewBox="0 0 64 64"><circle class="bg" cx="32" cy="32" r="26"/><circle class="fg" cx="32" cy="32" r="26" stroke="var(--green)" stroke-dasharray="163" stroke-dashoffset="{{ 163 - (163*pt/100) }}"/></svg>
+                    <span class="rv" style="color:var(--green)">{{ pt }}%</span>
+                </div>
+                <div class="ring-info"><div class="ri-title">Topics</div><div class="ri-sub">{{ rt }}/{{ tt }} processed</div></div>
+            </div>
+            <div class="ring-card">
+                <div class="ring">
+                    <svg viewBox="0 0 64 64"><circle class="bg" cx="32" cy="32" r="26"/><circle class="fg" cx="32" cy="32" r="26" stroke="var(--blue)" stroke-dasharray="163" stroke-dashoffset="{{ 163 - (163*pp/100) }}"/></svg>
+                    <span class="rv" style="color:var(--blue)">{{ pp }}%</span>
+                </div>
+                <div class="ring-info"><div class="ri-title">Projects</div><div class="ri-sub">{{ cp }}/{{ tp }} complete</div></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Teams -->
+    <div class="card">
+        <div class="card-header"><span class="card-icon" style="background:var(--green-light);color:var(--green)">⬡</span> Teams</div>
+        <div class="card-body">
+            <div class="team-row">
+                {% set icons = {'content':'✍','coding':'⚙','devops':'🔧','marketing':'📢','sales':'📨'} %}
+                {% for name, info in overview.teams.items() %}
+                <div class="t-card">
+                    <div class="t-ico">{{ icons.get(name,'◉') }}</div>
+                    <div class="t-name">{{ name }}</div>
+                    <div class="t-stat">{{ info.pending_tasks }}p · {{ info.running_tasks }}r</div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Row: Health + API -->
+<div class="grid-2">
+    {% if overview.stats.health %}
+    <div class="card">
+        <div class="card-header"><span class="card-icon" style="background:var(--green-light);color:var(--green)">♥</span> System Health</div>
+        <div class="card-body">
+            <div class="health-row">
+                {% for h in overview.stats.health %}
+                <div class="h-pill">
+                    <span class="h-dot {{ h.status }}"></span>
+                    <div class="h-text"><div class="h-n">{{ h.component }}</div><div class="h-m">{{ h.message }}</div></div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if overview.stats.api_today %}
+    <div class="card">
+        <div class="card-header"><span class="card-icon" style="background:var(--purple-light);color:var(--purple)">📊</span> API Usage Today</div>
+        <div class="card-body">
+            <table>
+                <thead><tr><th>Provider</th><th>Calls</th><th>Tok Out</th><th>Latency</th><th>Err</th></tr></thead>
+                <tbody>
+                    {% for u in overview.stats.api_today %}
+                    <tr>
+                        <td style="font-weight:700;font-size:12px">{{ u.provider }}</td>
+                        <td>{{ u.calls }}</td>
+                        <td>{{ u.total_out|default(0)|int }}</td>
+                        <td>{{ u.avg_latency|default(0)|int }}ms</td>
+                        <td>{% if u.errors %}<span style="color:var(--rose)">{{ u.errors }}</span>{% else %}0{% endif %}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+</div><!-- /dash-content -->
+{% endblock %}
+
+{% block scripts %}
+<script>
+// ── Calendar ──────────────────────
+let calDate = new Date();
+function renderCal(){
+    const g=document.getElementById('cal-grid'),l=document.getElementById('cal-month');
+    if(!g||!l)return;
+    const y=calDate.getFullYear(),m=calDate.getMonth(),t=new Date();
+    const mn=['January','February','March','April','May','June','July','August','September','October','November','December'];
+    l.textContent=`${mn[m]} ${y}`;
+    const fd=new Date(y,m,1).getDay(),dm=new Date(y,m+1,0).getDate(),dp=new Date(y,m,0).getDate();
+    let h='';
+    ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].forEach(d=>{h+=`<div class="cal-dn">${d}</div>`});
+    for(let i=fd-1;i>=0;i--)h+=`<div class="cal-d om">${dp-i}</div>`;
+    for(let d=1;d<=dm;d++){const it=d===t.getDate()&&m===t.getMonth()&&y===t.getFullYear();h+=`<div class="cal-d${it?' today':''}">${d}</div>`}
+    const rem=(7-(fd+dm)%7)%7;for(let i=1;i<=rem;i++)h+=`<div class="cal-d om">${i}</div>`;
+    g.innerHTML=h;
+}
+function calPrev(){calDate.setMonth(calDate.getMonth()-1);renderCal()}
+function calNext(){calDate.setMonth(calDate.getMonth()+1);renderCal()}
+renderCal();
+
+// ── Photo upload ──────────────────
+async function uploadPhoto(type, input){
+    const file=input.files[0];if(!file)return;
+    const fd=new FormData();fd.append('file',file);
+    try{
+        const r=await fetch(`/api/upload/${type}`,{method:'POST',body:fd});
+        const d=await r.json();
+        if(d.success){
+            if(type==='cover'){document.getElementById('cover-img').src=d.url+'?'+Date.now()}
+            else{const img=document.getElementById('pf-img');img.src=d.url+'?'+Date.now();img.style.display='block';document.getElementById('pf-initials').style.display='none'}
+            showToast(`${type} photo updated!`,'success');
+        }else{showToast(d.error||'Upload failed','error')}
+    }catch(e){showToast('Upload failed: '+e.message,'error')}
+}
+
+// ── Load existing photos ──────────
+fetch('/api/photos').then(r=>r.json()).then(d=>{
+    if(d.cover){document.getElementById('cover-img').src=d.cover}
+    if(d.profile){const img=document.getElementById('pf-img');img.src=d.profile;img.style.display='block';document.getElementById('pf-initials').style.display='none'}
+});
+</script>
+{% endblock %}

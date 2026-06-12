@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block title %}MACH-1 — Plans{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1>◈ CEO PLANS</h1>
+        <div class="subtitle">Daily plans created by the CEO agent</div>
+    </div>
+    <button class="btn btn-primary" onclick="createPlan()">+ New Plan</button>
+</div>
+
+{% if plans %}
+{% for plan in plans %}
+<div class="card">
+    <div class="card-header">
+        <span>#{{ plan.id }} — {{ plan.plan_type|upper }} — {{ plan.created_at[:16] }}</span>
+        <span class="badge badge-{{ plan.status }}">{{ plan.status }}</span>
+    </div>
+    <div class="card-body">
+        <p style="margin-bottom: 12px; font-weight: 500;">{{ plan.summary }}</p>
+
+        <div class="plan-detail" style="margin-bottom: 12px;">
+            <pre>{{ plan.details }}</pre>
+        </div>
+
+        {% if plan.human_notes %}
+        <p style="font-size: 12px; color: var(--accent-amber); margin-bottom: 12px;">
+            Your notes: {{ plan.human_notes }}
+        </p>
+        {% endif %}
+
+        <div class="btn-group">
+            {% if plan.status == 'proposed' %}
+            <button class="btn btn-green btn-sm" onclick="approvePlan({{ plan.id }})">✓ Approve</button>
+            <button class="btn btn-red btn-sm" onclick="rejectPlan({{ plan.id }})">✗ Reject</button>
+            {% elif plan.status == 'approved' %}
+            <button class="btn btn-primary btn-sm" onclick="executePlan({{ plan.id }})">▶ Execute Plan</button>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endfor %}
+{% else %}
+<div class="empty-state">
+    <div class="icon">◈</div>
+    <p>No plans yet. Click "New Plan" to have the CEO create one.</p>
+</div>
+{% endif %}
+{% endblock %}

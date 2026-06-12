@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% block title %}MACH-1 — Topics{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1>◇ TOPICS</h1>
+        <div class="subtitle">RSS-scraped topics for content generation</div>
+    </div>
+    <div class="btn-group">
+        <button class="btn" onclick="runScrape()">↻ Scrape RSS</button>
+        <button class="btn btn-primary" onclick="runRank()">▲ Rank Topics</button>
+    </div>
+</div>
+
+<div class="filter-tabs">
+    <a href="/topics" class="filter-tab {% if not current_status %}active{% endif %}">All</a>
+    <a href="/topics?status=new" class="filter-tab {% if current_status == 'new' %}active{% endif %}">New</a>
+    <a href="/topics?status=ranked" class="filter-tab {% if current_status == 'ranked' %}active{% endif %}">Ranked</a>
+    <a href="/topics?status=selected" class="filter-tab {% if current_status == 'selected' %}active{% endif %}">Selected</a>
+    <a href="/topics?status=used" class="filter-tab {% if current_status == 'used' %}active{% endif %}">Used</a>
+    <a href="/topics?status=rejected" class="filter-tab {% if current_status == 'rejected' %}active{% endif %}">Rejected</a>
+</div>
+
+{% if items %}
+<div class="card">
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Score</th>
+                    <th>Title</th>
+                    <th>Source</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in items %}
+                <tr>
+                    <td style="font-family: var(--font-mono); font-size: 12px;">{{ item.id }}</td>
+                    <td style="font-family: var(--font-mono); font-weight: 700;
+                        color: {% if item.score >= 7 %}var(--accent-green){% elif item.score >= 4 %}var(--accent-amber){% else %}var(--text-muted){% endif %};">
+                        {{ '%.1f'|format(item.score) }}
+                    </td>
+                    <td>
+                        {% if item.url %}<a href="{{ item.url }}" target="_blank">{{ item.title[:70] }}</a>
+                        {% else %}{{ item.title[:70] }}{% endif %}
+                        {% if item.title|length > 70 %}...{% endif %}
+                    </td>
+                    <td style="font-size: 12px; color: var(--text-secondary);">{{ item.source_name or '—' }}</td>
+                    <td><span class="badge badge-{{ item.status }}">{{ item.status }}</span></td>
+                    <td>
+                        <div class="btn-group">
+                            {% if item.status in ['new', 'ranked'] %}
+                            <button class="btn btn-green btn-sm" onclick="selectTopic({{ item.id }})">✓</button>
+                            <button class="btn btn-red btn-sm" onclick="rejectTopic({{ item.id }})">✗</button>
+                            {% endif %}
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% else %}
+<div class="empty-state">
+    <div class="icon">◇</div>
+    <p>No topics. Click "Scrape RSS" to fetch topics from your sources.</p>
+</div>
+{% endif %}
+{% endblock %}
